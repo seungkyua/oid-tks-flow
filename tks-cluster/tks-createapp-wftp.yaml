@@ -37,7 +37,7 @@ spec:
         --password $ARGO_PASSWORD
 
         # check if app already exists.
-        REPO=https://$(echo $gittoken|xargs)@github.com/$git_account/${contract_id}-manifests.git
+        REPO=https://$(echo -n $gittoken)@github.com/$git_account/${contract_id}-manifests.git
         ./argocd app get $CD_APP 
         if [[ $? -ne 0 ]]; then
           echo "$CD_APP application is not in server"
