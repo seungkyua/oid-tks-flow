@@ -33,42 +33,58 @@ spec:
 
   templates:
   - name: deploy
-    steps:
-    - - name: tks-create-cluster-site
-        template: new-cluster-site
+    dag:
+      tasks:
+        - name: tks-create-cluster-site
+          template: new-cluster-site
+          # TODO
+          # 1. AppGroup 별로 렌더링을 병렬 처리? 현 시점에서는 tks-cluster 만 필요
+          #
 
-    - - name: k8s-by-capi
-        templateRef:
-          name: tks-create-application-new
-          template: installAppsOnAdmin
-        arguments:
-          parameters: 
-          - name: list
-            value: |
-              [
-                { "path": "cluster-api-aws", "namespace": "argo" }
-              ]
+        - name: k8s-by-capi
+          templateRef:
+            name: tks-create-application-new
+            template: installAppsOnAdmin
+          arguments:
+            parameters:
+            - name: list
+              value: |
+                [
+                  { "path": "cluster-api-aws", "namespace": "argo" }
+                ]
+          dependencies:
+            - tks-create-cluster-site
+          # TODO
+          # 1. VPC 등을 Pool 형태로 미리 생성해두고 사용하는 방법: 계정 사용 형태 (TACO 계정 or 사용자 계정)에 따라 적용 불가능한 경우 존재
 
-    - - name: wait-for-clster-to-be-registered
-        template: wait-for-cluster-registration
+        - name: wait-for-clster-to-be-registered
+          template: wait-for-cluster-registration
+          dependencies:
+            - k8s-by-capi
 
-    - - name: prepare-additional-aws-infra
-        templateRef:
-          name: aws-infrastructure
-          template: AddAwsInfra
+        - name: prepare-additional-aws-infra
+          templateRef:
+            name: aws-infrastructure
+            template: AddAwsInfra
+          dependencies:
+            - wait-for-clster-to-be-registered
 
-    - - name: install-cni-and-csi
-        templateRef:
-          name: tks-create-application-new
-          template: installApps
-        arguments:
-          parameters: 
-          - name: list
-            value: |
-              [
-                { "path": "ingress-nginx", "namespace": "taco-system" },
-                { "path": "kubernetes-addons", "namespace": "taco-system" }
-              ]
+        - name: install-cni-and-csi
+          templateRef:
+            name: tks-create-application-new
+            template: installApps
+          arguments:
+            parameters:
+            - name: list
+              value: |
+                [
+                  { "path": "ingress-nginx", "namespace": "taco-system" },
+                  { "path": "kubernetes-addons", "namespace": "taco-system" }
+                ]
+          dependencies:
+            - wait-for-clster-to-be-registered
+       # TODO
+       # prepare-additional-aws-infra / install-cni-and-csi 병렬 처리 가능
 
   - name: wait-for-cluster-registration
     activeDeadlineSeconds: 1800
@@ -82,7 +98,7 @@ spec:
 
         while [ $(./argocd cluster list | grep \ $target\ | wc -l ) == 0 ]; do
             echo "> Wait for cluster to be registered"
-            sleep 30
+            sleep 1
         done
       envFrom:
       - secretRef:
