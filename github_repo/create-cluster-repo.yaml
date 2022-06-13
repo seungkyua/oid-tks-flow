@@ -51,6 +51,7 @@ spec:
         echo "max_size_per_az: $val_max_size"
 
         ## Replace site-values with fetched params ##
+        # XXX: TODO: AWS? BYOH?
         sed -i "s/clusterName:\ cluster.local/clusterName:\ $CLUSTER_ID/g" $CLUSTER_ID/$CLUSTER_ID/tks-cluster-aws/site-values.yaml
         sed -i "s/sshKeyName:\ CHANGEME/sshKeyName: $val_ssh_key/g" $CLUSTER_ID/$CLUSTER_ID/tks-cluster-aws/site-values.yaml
         sed -i "s/clusterRegion:\ CHANGEME/clusterRegion: $val_region/g" $CLUSTER_ID/$CLUSTER_ID/tks-cluster-aws/site-values.yaml

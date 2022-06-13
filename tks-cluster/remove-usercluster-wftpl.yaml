@@ -8,7 +8,7 @@ spec:
   arguments:
     parameters:
     - name: app_group
-      value: "tks-cluster-aws"
+      value: "tks-cluster"
     - name: tks_info_host
       value: "tks-info.tks.svc"
     - name: cluster_id
